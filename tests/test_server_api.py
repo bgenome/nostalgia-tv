@@ -1,11 +1,11 @@
-import unittest
 import os
 import sys
+import unittest
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, BASE_DIR)
 
-from server import load_channels_data, get_local_ip, SimulatedBroadcastEngine
+from server import SimulatedBroadcastEngine, get_local_ip, load_channels_data
 
 class TestServerAPI(unittest.TestCase):
     def test_load_channels_data(self):

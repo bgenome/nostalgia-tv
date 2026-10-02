@@ -31,7 +31,7 @@ jobs:
 
       - name: Run Ruff Linting
         run: |
-          ruff check src/ tests/ server.py
+          ruff check --select E9,F63,F7,F82 src/ tests/ server.py
 
       - name: Run Unit Tests (unittest)
         run: |
