@@ -1,0 +1,4 @@
+# Netscape HTTP Cookie File
+# Export your YouTube cookies in Netscape format here if downloading restricted videos.
+# Format:
+# .youtube.com	TRUE	/	TRUE	1750000000	SID	your_cookie_token_here

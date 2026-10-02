@@ -1,0 +1,15 @@
+[Unit]
+Description=Nostalgia TV Kiosk Application
+After=network.target network-online.target systemd-user-sessions.service
+
+[Service]
+Type=simple
+User=pi
+# Use cage as the minimal Wayland compositor to run our PyQt app full screen
+ExecStart=/usr/bin/cage -s -- /home/pi/nostalgia-tv/venv/bin/python /home/pi/nostalgia-tv/main.py
+WorkingDirectory=/home/pi/nostalgia-tv
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

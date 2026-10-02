@@ -1,0 +1,15 @@
+# ==============================================================================
+# Nostalgia TV - Requirements
+# ==============================================================================
+# NOTE: The core standalone broadcast server & web player (server.py)
+# require ZERO external pip dependencies - it runs out of the box with Python 3!
+#
+# The dependencies below are only needed for the native PyQt6 desktop / kiosk
+# display client (main.py):
+
+PyQt6>=6.5.0
+python-mpv>=1.0.5
+pyyaml>=6.0.1
+
+# Optional: HDMI-CEC TV Remote Control support (Linux / Raspberry Pi only)
+# cec>=0.2.8

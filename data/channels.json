@@ -1,0 +1,115 @@
+{
+  "global": {
+    "station_name": "NOSTALGIA TV 90s",
+    "boot_video": "boot_intro",
+    "crt_filter_enabled": true,
+    "scanlines": true,
+    "curvature": true
+  },
+  "channels": {
+    "1": {
+      "name": "TV GUIDE (PREVUE)",
+      "type": "guide",
+      "genre": "Program Guide",
+      "description": "Continuous scrolling program guide and station promos"
+    },
+    "2": {
+      "name": "SUPERMAN 1941 (PLEX)",
+      "type": "tv_shows",
+      "genre": "Classic Animation",
+      "description": "Fleischer Studios Technicolor Superman shorts served directly from local Plex Media Server",
+      "shows": [
+        {
+          "title": "Superman (1941) - S01E01 - The Mad Scientist",
+          "duration": 620,
+          "video_url": "http://127.0.0.1:32400/library/parts/3/1788438259/file.mp4",
+          "part_file": "/media/Cartoons/Superman 1941/Season 01/Superman - S01E01 - The Mad Scientist.mp4",
+          "tag": "Fleischer Studios"
+        },
+        {
+          "title": "Superman (1941) - S01E02 - The Mechanical Monsters",
+          "duration": 614,
+          "video_url": "http://127.0.0.1:32400/library/parts/4/1788438466/file.mp4",
+          "part_file": "/media/Cartoons/Superman 1941/Season 01/Superman - S01E02 - The Mechanical Monsters.mp4",
+          "tag": "Fleischer Studios"
+        }
+      ]
+    },
+    "3": {
+      "name": "RETRO TOON MATINEE (PLEX)",
+      "type": "movies",
+      "genre": "Vintage Cartoons",
+      "description": "Shuffled vintage animated features and cartoon specials from Plex",
+      "movies": [
+        {
+          "title": "Superman - The Mechanical Monsters Feature",
+          "duration": 614,
+          "video_url": "http://127.0.0.1:32400/library/parts/4/1788438466/file.mp4",
+          "part_file": "/media/Cartoons/Superman 1941/Season 01/Superman - S01E02 - The Mechanical Monsters.mp4"
+        },
+        {
+          "title": "Superman - The Mad Scientist Feature",
+          "duration": 620,
+          "video_url": "http://127.0.0.1:32400/library/parts/3/1788438259/file.mp4",
+          "part_file": "/media/Cartoons/Superman 1941/Season 01/Superman - S01E01 - The Mad Scientist.mp4"
+        }
+      ]
+    },
+    "4": {
+      "name": "AFTER-SCHOOL TIME SLOTS",
+      "type": "scheduled",
+      "genre": "Scheduled Cartoons",
+      "description": "Strict time slots: 4:00 PM and 4:30 PM cartoons with retro commercial breaks during dead air",
+      "schedule": [
+        {
+          "start": "08:00",
+          "end": "08:30",
+          "title": "Superman - Morning Edition",
+          "video_url": "http://127.0.0.1:32400/library/parts/3/1788438259/file.mp4",
+          "duration": 620
+        },
+        {
+          "start": "15:00",
+          "end": "15:30",
+          "title": "Superman - After-School Special",
+          "video_url": "http://127.0.0.1:32400/library/parts/3/1788438259/file.mp4",
+          "duration": 620
+        },
+        {
+          "start": "15:30",
+          "end": "16:00",
+          "title": "Superman - Mechanical Monsters",
+          "video_url": "http://127.0.0.1:32400/library/parts/4/1788438466/file.mp4",
+          "duration": 614
+        },
+        {
+          "start": "16:00",
+          "end": "16:30",
+          "title": "Superman - The Mad Scientist",
+          "video_url": "http://127.0.0.1:32400/library/parts/3/1788438259/file.mp4",
+          "duration": 620
+        }
+      ],
+      "bumpers": [
+        {
+          "title": "Retro 90s Commercial Reel",
+          "duration": 60,
+          "video_url": "http://127.0.0.1:32400/library/parts/3/1788438259/file.mp4"
+        }
+      ]
+    },
+    "5": {
+      "name": "90s COMMERCIALS & BUMPERS",
+      "type": "bumpers",
+      "genre": "Retro Vault",
+      "description": "Non-stop vintage cereal, toy, and video game ads",
+      "items": [
+        {
+          "title": "Retro 90s Commercial Reel",
+          "duration": 60,
+          "video_url": "http://127.0.0.1:32400/library/parts/3/1788438259/file.mp4"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,136 @@
+# ==============================================================================
+# Nostalgia TV - Git Ignore Rules
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# Large Downloads & ROMs (Strictly Excluded)
+# ------------------------------------------------------------------------------
+downloads/
+downloads_verbose.log
+*.log
+
+# ------------------------------------------------------------------------------
+# Video & Binary Media Files (Download on-demand via download_public_domain_media.py)
+# ------------------------------------------------------------------------------
+media/**
+!media/
+!media/**/
+!media/**/.gitkeep
+
+# ------------------------------------------------------------------------------
+# Plex Server Local Data & Cache
+# ------------------------------------------------------------------------------
+plex_config/Library/
+plex_config/**/*.db
+plex_config/**/*.log
+
+# ------------------------------------------------------------------------------
+# Sensitive Information & Session Tokens
+# ------------------------------------------------------------------------------
+data/youtube_cookies.txt
+*.token
+*.key
+.env
+.env.*
+
+# ------------------------------------------------------------------------------
+# Unrelated Game Scraping / Abandonware / Steam Deck Tooling
+# ------------------------------------------------------------------------------
+nostalgia_game_library.xlsx
+steamdeck_nostalgia_games_checklist.xlsx
+abandonware_links.txt
+all_hyperlinks.html
+found_links.txt
+missing_games.txt
+generate_hyperlinks_files.py
+automate_save_game.py
+fetch_all_multi_discs.py
+retry_remaining_multi_discs.py
+run_full_library_download.py
+scan_abandonware.py
+scan_and_download_multi_discs.py
+scan_and_generate_links.py
+scan_and_generate_links_strict.py
+scan_games.py
+test_download_no_timeout.py
+scripts/sync_to_steamdeck.py
+
+# Unrelated Game Platform Catalog Exports
+DOS & Early PC.*
+DOS_&_Early_PC.*
+Dreamcast & Arcade.*
+Dreamcast_&_Arcade.*
+Game Boy-GBC-GBA.*
+Game_Boy-GBC-GBA.*
+PC Action & Adventure.*
+PC_Action_&_Adventure.*
+PC Driving & Vehicular.*
+PC_Driving_&_Vehicular.*
+PC Half-Life & FPS.*
+PC_Half-Life_&_FPS.*
+PC Online & MMO.*
+PC_Online_&_MMO.*
+PC RPG & ARPG.*
+PC_RPG_&_ARPG.*
+PC Tactical & Strategy.*
+PC_Tactical_&_Strategy.*
+PlayStation 1.*
+PlayStation_1.*
+PlayStation 2.*
+PlayStation_2.*
+SEGA Genesis.*
+SEGA_Genesis.*
+SNES-N64-GameCube.*
+
+# ------------------------------------------------------------------------------
+# Python & Bytecode
+# ------------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environments
+.venv/
+venv/
+ENV/
+env/
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+.ruff_cache/
+
+# ------------------------------------------------------------------------------
+# OS & IDE Junk
+# ------------------------------------------------------------------------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace

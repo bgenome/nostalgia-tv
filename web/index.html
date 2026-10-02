@@ -1,0 +1,1146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nostalgia TV - CRT Broadcast Experience</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      background-color: #0d0e12;
+      color: #fff;
+      font-family: 'Courier New', Courier, monospace;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Living room ambience */
+    .room-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 30px;
+      width: 100%;
+      max-width: 1400px;
+      height: 95vh;
+      padding: 10px;
+    }
+
+    /* 90s TV Set Frame */
+    .tv-frame {
+      position: relative;
+      flex: 1;
+      height: 100%;
+      max-height: 850px;
+      background: radial-gradient(circle at center, #2e2f38 0%, #15161b 80%, #08080a 100%);
+      border-radius: 40px;
+      padding: 30px;
+      box-shadow: 
+        0 20px 50px rgba(0,0,0,0.9),
+        inset 0 4px 6px rgba(255,255,255,0.1),
+        inset 0 -6px 12px rgba(0,0,0,0.8);
+      display: flex;
+      flex-direction: column;
+      border: 4px solid #1a1b22;
+    }
+
+    .tv-bezel {
+      position: relative;
+      flex: 1;
+      background: #000;
+      border-radius: 50px / 40px;
+      overflow: hidden;
+      border: 12px solid #121317;
+      box-shadow: 
+        inset 0 0 40px rgba(0,0,0,0.95),
+        0 0 15px rgba(0,0,0,0.8);
+    }
+
+    /* Curved CRT Screen */
+    .crt-screen {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      background-color: #050505;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Barrel Distortion / Bulbous Glass Curvature */
+    .crt-screen.curvature-on {
+      border-radius: 45px / 35px;
+      transform: perspective(600px) scale(0.98);
+      box-shadow: inset 0 0 80px rgba(0,0,0,0.85);
+    }
+
+    /* Video Player */
+    #main-video {
+      width: 100%;
+      height: 100%;
+      object-fit: fill;
+      filter: contrast(1.15) brightness(1.05) saturate(1.2);
+    }
+
+    /* Fallback Retro Animated Canvas */
+    #fallback-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: none;
+    }
+
+    /* Static Canvas (Burst on channel change) */
+    #static-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 10;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.08s ease;
+    }
+
+    /* Scanlines Overlay */
+    .scanlines {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 20;
+      pointer-events: none;
+      background: linear-gradient(
+        rgba(18, 16, 16, 0) 50%, 
+        rgba(0, 0, 0, 0.45) 50%
+      );
+      background-size: 100% 4px;
+      opacity: 0.85;
+    }
+
+    /* Phosphor Mask & Vignette */
+    .crt-vignette {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 21;
+      pointer-events: none;
+      background: radial-gradient(circle at center, transparent 65%, rgba(0,0,0,0.7) 100%);
+      box-shadow: inset 0 0 60px rgba(0,0,0,0.8);
+    }
+
+    /* Subtle Glass Glare Reflection */
+    .crt-glare {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 22;
+      pointer-events: none;
+      background: linear-gradient(135deg, rgba(255,255,255,0.06) 0%, transparent 40%);
+    }
+
+    /* Retro Green On-Screen Display (OSD) */
+    .osd-container {
+      position: absolute;
+      top: 30px;
+      left: 40px;
+      z-index: 30;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .osd-container.active {
+      opacity: 1;
+    }
+
+    .osd-channel {
+      font-size: 42px;
+      font-weight: 900;
+      color: #33ff33;
+      text-shadow: 0 0 10px #33ff33, 0 0 20px #008800;
+      letter-spacing: 2px;
+      line-height: 1.1;
+    }
+
+    .osd-title {
+      font-size: 20px;
+      font-weight: bold;
+      color: #aaffaa;
+      text-shadow: 0 0 8px #008800;
+      letter-spacing: 1px;
+      margin-top: 5px;
+      max-width: 500px;
+    }
+
+    .osd-tag {
+      display: inline-block;
+      margin-top: 6px;
+      background: rgba(0, 255, 0, 0.2);
+      border: 1px solid #33ff33;
+      color: #33ff33;
+      padding: 2px 8px;
+      font-size: 13px;
+      border-radius: 4px;
+    }
+
+    /* TV Guide Channel (Channel 1) Split View */
+    .guide-view {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: none;
+      flex-direction: column;
+      z-index: 5;
+      background: #000088;
+    }
+
+    .guide-top {
+      height: 48%;
+      position: relative;
+      background: #000;
+      border-bottom: 4px solid #ffff00;
+    }
+
+    .guide-top video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .guide-top-banner {
+      position: absolute;
+      top: 10px;
+      left: 15px;
+      background: rgba(0,0,120,0.8);
+      border: 2px solid #ffff00;
+      padding: 4px 12px;
+      color: #ffff00;
+      font-size: 16px;
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
+
+    .guide-bottom {
+      height: 52%;
+      background: #0000aa;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .guide-header {
+      background: #000066;
+      border-bottom: 3px solid #ffff00;
+      padding: 8px 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: #ffff00;
+      font-weight: bold;
+      font-size: 15px;
+    }
+
+    .guide-grid {
+      flex: 1;
+      overflow-y: hidden;
+      display: flex;
+      flex-direction: column;
+      font-size: 15px;
+    }
+
+    .guide-row {
+      display: flex;
+      border-bottom: 1px solid #2222cc;
+      padding: 8px 12px;
+      background: rgba(0,0,160,0.6);
+      align-items: center;
+    }
+
+    .guide-row:nth-child(even) {
+      background: rgba(0,0,130,0.8);
+    }
+
+    .guide-row .ch-col {
+      width: 70px;
+      font-weight: 900;
+      color: #ffff00;
+    }
+
+    .guide-row .name-col {
+      width: 170px;
+      font-weight: bold;
+      color: #ffffff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .guide-row .now-col {
+      flex: 1;
+      color: #aaccff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* TV Set Badge & Buttons */
+    .tv-controls-panel {
+      margin-top: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 10px;
+    }
+
+    .tv-brand {
+      font-size: 13px;
+      font-weight: bold;
+      letter-spacing: 3px;
+      color: #6d7285;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .power-led {
+      width: 8px;
+      height: 8px;
+      background: #ff3333;
+      border-radius: 50%;
+      box-shadow: 0 0 8px #ff3333;
+    }
+
+    .tv-aux-buttons {
+      display: flex;
+      gap: 10px;
+    }
+
+    .aux-btn {
+      background: #252733;
+      border: 1px solid #3c4050;
+      color: #8f95aa;
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .aux-btn:hover {
+      background: #333647;
+      color: #fff;
+    }
+
+    /* LG Magic Remote Column */
+    .remote-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .lg-remote {
+      width: 150px;
+      height: 560px;
+      background: linear-gradient(175deg, #2c2f38 0%, #17181f 70%, #0d0e12 100%);
+      border-radius: 45px;
+      border: 2px solid #444758;
+      box-shadow: 
+        0 15px 35px rgba(0,0,0,0.8),
+        inset 0 2px 4px rgba(255,255,255,0.2),
+        inset 0 -4px 8px rgba(0,0,0,0.9);
+      padding: 20px 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      position: relative;
+    }
+
+    .remote-header {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 4px;
+    }
+
+    .btn-power {
+      width: 32px;
+      height: 32px;
+      background: #cc2222;
+      border-radius: 50%;
+      border: none;
+      color: #fff;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.6), inset 0 2px 2px rgba(255,255,255,0.3);
+    }
+    .btn-power:active { transform: scale(0.95); }
+
+    .remote-brand {
+      font-size: 11px;
+      font-weight: bold;
+      color: #888d9f;
+      letter-spacing: 1px;
+    }
+
+    /* Keypad 3x3 */
+    .keypad {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      width: 100%;
+    }
+
+    .num-btn {
+      background: #252834;
+      border: 1px solid #3b3f52;
+      color: #ddd;
+      font-size: 12px;
+      font-weight: bold;
+      height: 28px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    }
+    .num-btn:active { background: #444a60; }
+
+    /* Rockers */
+    .rockers-row {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      padding: 0 4px;
+    }
+
+    .rocker-col {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      align-items: center;
+    }
+
+    .rocker-label {
+      font-size: 9px;
+      color: #777c90;
+      text-transform: uppercase;
+      font-weight: bold;
+    }
+
+    .rocker-btn {
+      width: 44px;
+      height: 38px;
+      background: #2b2f3d;
+      border: 1px solid #43485c;
+      color: #fff;
+      font-weight: bold;
+      font-size: 14px;
+      border-radius: 12px;
+      cursor: pointer;
+      box-shadow: 0 3px 5px rgba(0,0,0,0.5);
+    }
+    .rocker-btn:active { background: #444a60; transform: scale(0.96); }
+
+    /* LG Magic Wheel / D-Pad */
+    .magic-wheel-container {
+      position: relative;
+      width: 90px;
+      height: 90px;
+      background: #20232d;
+      border-radius: 50%;
+      border: 2px solid #3c4052;
+      box-shadow: inset 0 2px 6px rgba(0,0,0,0.8), 0 3px 6px rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .wheel-dir {
+      position: absolute;
+      background: none;
+      border: none;
+      color: #99a0b5;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .wheel-dir:hover { color: #fff; }
+    .wheel-up { top: 6px; }
+    .wheel-down { bottom: 6px; }
+    .wheel-left { left: 8px; }
+    .wheel-right { right: 8px; }
+
+    .wheel-center {
+      width: 40px;
+      height: 40px;
+      background: radial-gradient(circle, #3d4253 0%, #20232d 100%);
+      border-radius: 50%;
+      border: 1px solid #555b72;
+      color: #fff;
+      font-size: 11px;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.6);
+    }
+    .wheel-center:active { transform: scale(0.92); }
+
+    /* Bottom Action Buttons */
+    .remote-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      width: 100%;
+    }
+
+    .guide-btn {
+      width: 100%;
+      height: 30px;
+      background: #1e3a6e;
+      border: 1px solid #3366cc;
+      color: #88bbff;
+      font-size: 12px;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    }
+    .guide-btn:hover { background: #274b8e; color: #fff; }
+
+    .remote-legend {
+      margin-top: 10px;
+      font-size: 11px;
+      color: #777c90;
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    /* Unmute overlay prompt */
+    #unmute-overlay {
+      position: absolute;
+      bottom: 25px;
+      right: 25px;
+      background: rgba(0,0,0,0.85);
+      border: 2px solid #33ff33;
+      padding: 10px 18px;
+      border-radius: 8px;
+      color: #33ff33;
+      font-size: 14px;
+      cursor: pointer;
+      z-index: 100;
+      box-shadow: 0 4px 15px rgba(0,255,0,0.3);
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+  </style>
+</head>
+<body>
+
+<div class="room-container">
+  <!-- Television Chassis -->
+  <div class="tv-frame">
+    <div class="tv-bezel">
+      <div class="crt-screen curvature-on" id="screen">
+        <!-- Main Video Element -->
+        <video id="main-video" autoplay playsinline muted></video>
+
+        <!-- Fallback Procedural 90s Cartoon Canvas -->
+        <canvas id="fallback-canvas"></canvas>
+
+        <!-- Dynamic Static Noise Burst Canvas -->
+        <canvas id="static-canvas"></canvas>
+
+        <!-- CRT Aesthetic Overlays -->
+        <div class="scanlines" id="scanlines-layer"></div>
+        <div class="crt-vignette"></div>
+        <div class="crt-glare"></div>
+
+        <!-- On-Screen Display (Green phosphor text) -->
+        <div class="osd-container" id="osd">
+          <div class="osd-channel" id="osd-channel-text">CH 02</div>
+          <div class="osd-title" id="osd-title-text">CARTOON EXPRESS</div>
+          <div class="osd-tag" id="osd-tag-text">LIVE BROADCAST</div>
+        </div>
+
+        <!-- TV Guide (Prevue Channel 1) View -->
+        <div class="guide-view" id="guide-view">
+          <div class="guide-top">
+            <video id="guide-pip-video" autoplay loop muted playsinline></video>
+            <div class="guide-top-banner">★ NOSTALGIA TV PREVUE ★</div>
+          </div>
+          <div class="guide-bottom">
+            <div class="guide-header">
+              <span>CHANNEL LISTING</span>
+              <span id="guide-clock">12:00:00 PM</span>
+            </div>
+            <div class="guide-grid" id="guide-grid-rows">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Unmute prompt banner -->
+        <div id="unmute-overlay">🔊 Click anywhere for Audio</div>
+      </div>
+    </div>
+
+    <!-- Bottom TV Panel -->
+    <div class="tv-controls-panel">
+      <div class="tv-brand">
+        <div class="power-led" id="power-led"></div>
+        <span>TRINITRON NOSTALGIA CRT • 1995</span>
+      </div>
+      <div class="tv-aux-buttons">
+        <button class="aux-btn" onclick="toggleCRT()">CRT Filter</button>
+        <button class="aux-btn" onclick="toggleScanlines()">Scanlines</button>
+        <button class="aux-btn" onclick="toggleFullscreen()">Fullscreen</button>
+        <a href="/admin" target="_blank" class="aux-btn" style="text-decoration: none; display: inline-block;">⚙️ Admin</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- LG Magic Remote (AKB75855501 replica) -->
+  <div class="remote-wrapper">
+    <div class="lg-remote">
+      <div class="remote-header">
+        <button class="btn-power" onclick="togglePower()" title="Power">⏻</button>
+        <span class="remote-brand">LG MAGIC</span>
+      </div>
+
+      <!-- 1-9 Keypad -->
+      <div class="keypad">
+        <button class="num-btn" onclick="tuneChannel(1)">1</button>
+        <button class="num-btn" onclick="tuneChannel(2)">2</button>
+        <button class="num-btn" onclick="tuneChannel(3)">3</button>
+        <button class="num-btn" onclick="tuneChannel(4)">4</button>
+        <button class="num-btn" onclick="tuneChannel(5)">5</button>
+        <button class="num-btn" onclick="tuneChannel(6)">6</button>
+        <button class="num-btn" onclick="tuneChannel(7)">7</button>
+        <button class="num-btn" onclick="tuneChannel(8)">8</button>
+        <button class="num-btn" onclick="tuneChannel(9)">9</button>
+      </div>
+
+      <!-- Rockers -->
+      <div class="rockers-row">
+        <div class="rocker-col">
+          <span class="rocker-label">VOL</span>
+          <button class="rocker-btn" onclick="volUp()">▲</button>
+          <button class="rocker-btn" onclick="volDown()">▼</button>
+        </div>
+        <div class="rocker-col">
+          <span class="rocker-label">CH</span>
+          <button class="rocker-btn" onclick="channelUp()">▲</button>
+          <button class="rocker-btn" onclick="channelDown()">▼</button>
+        </div>
+      </div>
+
+      <!-- D-Pad / Magic Wheel -->
+      <div class="magic-wheel-container">
+        <button class="wheel-dir wheel-up" onclick="channelUp()">▲</button>
+        <button class="wheel-dir wheel-down" onclick="channelDown()">▼</button>
+        <button class="wheel-dir wheel-left" onclick="channelDown()">◀</button>
+        <button class="wheel-dir wheel-right" onclick="channelUp()">▶</button>
+        <button class="wheel-center" onclick="confirmSelect()">OK</button>
+      </div>
+
+      <!-- Actions -->
+      <div class="remote-actions">
+        <button class="guide-btn" onclick="tuneChannel(1)">GUIDE</button>
+        <button class="num-btn" style="width:100%" onclick="toggleMute()">MUTE</button>
+      </div>
+    </div>
+    <div class="remote-legend">
+      Keyboard Shortcuts:<br>
+      <b>▲ / ▼</b> : Channel Up / Down<br>
+      <b>1 - 5</b> : Direct Channel<br>
+      <b>G</b> : Guide | <b>F</b> : Fullscreen
+    </div>
+  </div>
+</div>
+
+<script>
+  // State
+  let currentChannel = 2;
+  let isPowered = true;
+  let isMuted = true;
+  let channelsData = {};
+  let statusPollTimer = null;
+  let osdTimer = null;
+  let audioCtx = null;
+  let staticCanvas = document.getElementById("static-canvas");
+  let staticCtx = staticCanvas.getContext("2d");
+  let fallbackCanvas = document.getElementById("fallback-canvas");
+  let fallbackCtx = fallbackCanvas.getContext("2d");
+  let mainVideo = document.getElementById("main-video");
+  let guidePipVideo = document.getElementById("guide-pip-video");
+  let guideView = document.getElementById("guide-view");
+  let unmuteOverlay = document.getElementById("unmute-overlay");
+
+  // Setup Canvases
+  function resizeCanvases() {
+    staticCanvas.width = 320;
+    staticCanvas.height = 240;
+    fallbackCanvas.width = 640;
+    fallbackCanvas.height = 480;
+  }
+  resizeCanvases();
+  window.addEventListener("resize", resizeCanvases);
+
+  // Audio Context & Procedural Static Sound
+  function initAudio() {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+  }
+
+  function playStaticBurst(durationMs = 280) {
+    if (isMuted || !audioCtx) return;
+    try {
+      const bufferSize = audioCtx.sampleRate * (durationMs / 1000);
+      const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = (Math.random() * 2 - 1) * 0.15;
+      }
+      const noise = audioCtx.createBufferSource();
+      noise.buffer = buffer;
+      const gain = audioCtx.createGain();
+      gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + (durationMs / 1000));
+      noise.connect(gain);
+      gain.connect(audioCtx.destination);
+      noise.start();
+    } catch (e) {
+      // Audio autoplay policy
+    }
+  }
+
+  // Draw Dynamic TV Static Noise
+  function renderStaticFrame() {
+    const w = staticCanvas.width;
+    const h = staticCanvas.height;
+    const imgData = staticCtx.createImageData(w, h);
+    const buffer = new Uint32Array(imgData.data.buffer);
+    for (let i = 0; i < buffer.length; i++) {
+      const gray = (Math.random() * 255) | 0;
+      buffer[i] = (255 << 24) | (gray << 16) | (gray << 8) | gray;
+    }
+    staticCtx.putImageData(imgData, 0, 0);
+  }
+
+  let staticInterval = null;
+  function triggerChannelStatic(ms = 350) {
+    staticCanvas.style.opacity = "1";
+    playStaticBurst(ms);
+    if (!staticInterval) {
+      staticInterval = setInterval(renderStaticFrame, 33);
+    }
+    setTimeout(() => {
+      staticCanvas.style.opacity = "0";
+      clearInterval(staticInterval);
+      staticInterval = null;
+    }, ms);
+  }
+
+  // Fallback Procedural 90s Cartoon Scene (if offline/no-stream)
+  let animTick = 0;
+  function drawProceduralCartoon(title) {
+    animTick += 0.05;
+    const w = fallbackCanvas.width;
+    const h = fallbackCanvas.height;
+    
+    // Sky background gradient
+    const sky = fallbackCtx.createLinearGradient(0, 0, 0, h);
+    sky.addColorStop(0, "#4a90e2");
+    sky.addColorStop(0.7, "#87ceeb");
+    sky.addColorStop(1, "#38b000");
+    fallbackCtx.fillStyle = sky;
+    fallbackCtx.fillRect(0, 0, w, h);
+
+    // Sun
+    fallbackCtx.beginPath();
+    fallbackCtx.arc(w - 90, 80, 45, 0, Math.PI * 2);
+    fallbackCtx.fillStyle = "#ffdd00";
+    fallbackCtx.fill();
+
+    // Hills
+    fallbackCtx.fillStyle = "#2d6a4f";
+    fallbackCtx.beginPath();
+    fallbackCtx.arc(150, h + 80, 260, 0, Math.PI, true);
+    fallbackCtx.fill();
+
+    fallbackCtx.fillStyle = "#40916c";
+    fallbackCtx.beginPath();
+    fallbackCtx.arc(w - 120, h + 50, 220, 0, Math.PI, true);
+    fallbackCtx.fill();
+
+    // The Magic School Bus or Arthur's Yellow Bus
+    const busX = ((animTick * 40) % (w + 200)) - 100;
+    const busY = h - 140 + Math.sin(animTick * 6) * 4;
+
+    // Bus body
+    fallbackCtx.fillStyle = "#ffd100";
+    fallbackCtx.fillRect(busX, busY, 140, 55);
+    fallbackCtx.fillStyle = "#e0a800";
+    fallbackCtx.fillRect(busX, busY + 35, 140, 8);
+
+    // Windows
+    fallbackCtx.fillStyle = "#d0f4de";
+    fallbackCtx.fillRect(busX + 15, busY + 10, 25, 20);
+    fallbackCtx.fillRect(busX + 50, busY + 10, 25, 20);
+    fallbackCtx.fillRect(busX + 85, busY + 10, 25, 20);
+
+    // Characters in windows
+    fallbackCtx.fillStyle = "#936639"; // Arthur
+    fallbackCtx.beginPath();
+    fallbackCtx.arc(busX + 27, busY + 22, 7, 0, Math.PI * 2);
+    fallbackCtx.fill();
+
+    fallbackCtx.fillStyle = "#ff4d6d"; // Ms. Frizzle hair
+    fallbackCtx.beginPath();
+    fallbackCtx.arc(busX + 62, busY + 20, 9, 0, Math.PI * 2);
+    fallbackCtx.fill();
+
+    // Bus Wheels
+    fallbackCtx.fillStyle = "#1b1b1b";
+    fallbackCtx.beginPath();
+    fallbackCtx.arc(busX + 30, busY + 55, 14, 0, Math.PI * 2);
+    fallbackCtx.arc(busX + 110, busY + 55, 14, 0, Math.PI * 2);
+    fallbackCtx.fill();
+    fallbackCtx.fillStyle = "#888";
+    fallbackCtx.beginPath();
+    fallbackCtx.arc(busX + 30, busY + 55, 6, 0, Math.PI * 2);
+    fallbackCtx.arc(busX + 110, busY + 55, 6, 0, Math.PI * 2);
+    fallbackCtx.fill();
+
+    // Road
+    fallbackCtx.fillStyle = "#343a40";
+    fallbackCtx.fillRect(0, h - 80, w, 80);
+    fallbackCtx.strokeStyle = "#ffdd00";
+    fallbackCtx.lineWidth = 4;
+    fallbackCtx.setLineDash([25, 20]);
+    fallbackCtx.beginPath();
+    fallbackCtx.moveTo(0, h - 40);
+    fallbackCtx.lineTo(w, h - 40);
+    fallbackCtx.stroke();
+    fallbackCtx.setLineDash([]);
+
+    // Retro Title Badge
+    fallbackCtx.fillStyle = "rgba(0,0,0,0.75)";
+    fallbackCtx.fillRect(20, 20, w - 40, 48);
+    fallbackCtx.fillStyle = "#33ff33";
+    fallbackCtx.font = "bold 20px 'Courier New', monospace";
+    fallbackCtx.fillText("★ " + (title || "90s NOSTALGIA TOONS").toUpperCase() + " ★", 35, 52);
+  }
+
+  let fallbackLoop = null;
+  function startFallbackAnimation(title) {
+    fallbackCanvas.style.display = "block";
+    mainVideo.style.display = "none";
+    if (fallbackLoop) cancelAnimationFrame(fallbackLoop);
+    function loop() {
+      drawProceduralCartoon(title);
+      fallbackLoop = requestAnimationFrame(loop);
+    }
+    loop();
+  }
+
+  function stopFallbackAnimation() {
+    if (fallbackLoop) cancelAnimationFrame(fallbackLoop);
+    fallbackCanvas.style.display = "none";
+    mainVideo.style.display = "block";
+  }
+
+  // Fetch Channel Status & Sync Playback
+  async function fetchChannelStatus(chNum) {
+    try {
+      const res = await fetch(`/api/status?channel=${chNum}`);
+      if (!res.ok) throw new Error("API error");
+      const data = await res.json();
+      return data;
+    } catch (e) {
+      console.warn("Backend offline, using internal fallback schedule", e);
+      return getLocalFallbackStatus(chNum);
+    }
+  }
+
+  function getLocalFallbackStatus(chNum) {
+    const now = new Date();
+    const sec = Math.floor(now.getTime() / 1000) % 600;
+    if (chNum === 1) {
+      return {
+        channel: 1,
+        name: "TV GUIDE (PREVUE)",
+        type: "guide",
+        title: "PREVUE SCROLLING GUIDE"
+      };
+    } else if (chNum === 2) {
+      return {
+        channel: 2,
+        name: "CARTOON EXPRESS",
+        type: "tv_shows",
+        title: "Arthur - Season 1: Arthur's Eyes",
+        seek_seconds: sec % 300,
+        video_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+      };
+    } else if (chNum === 3) {
+      return {
+        channel: 3,
+        name: "RETRO MOVIE MATINEE",
+        type: "movies",
+        title: "The Iron Giant (1999)",
+        seek_seconds: sec % 400,
+        video_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4"
+      };
+    } else if (chNum === 4) {
+      return {
+        channel: 4,
+        name: "AFTER-SCHOOL TIME SLOTS",
+        type: "scheduled",
+        title: "The Magic School Bus - Inside Ralphie",
+        seek_seconds: sec % 250,
+        video_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4"
+      };
+    } else {
+      return {
+        channel: chNum,
+        name: "90s COMMERCIALS & BUMPERS",
+        type: "bumpers",
+        title: "Super Nintendo 'Play It Loud' Commercial",
+        seek_seconds: sec % 60,
+        video_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"
+      };
+    }
+  }
+
+  // Show On-Screen Display (OSD)
+  function showOSD(chNum, name, title) {
+    const osd = document.getElementById("osd");
+    document.getElementById("osd-channel-text").innerText = `CH 0${chNum}`;
+    document.getElementById("osd-title-text").innerText = `${name} • ${title}`;
+    osd.classList.add("active");
+    if (osdTimer) clearTimeout(osdTimer);
+    osdTimer = setTimeout(() => {
+      osd.classList.remove("active");
+    }, 3800);
+  }
+
+  // Render Prevue TV Guide Grid
+  async function renderGuideGrid() {
+    const gridEl = document.getElementById("guide-grid-rows");
+    const clockEl = document.getElementById("guide-clock");
+    const now = new Date();
+    clockEl.innerText = now.toLocaleTimeString();
+
+    try {
+      const res = await fetch("/api/guide");
+      const data = await res.json();
+      gridEl.innerHTML = "";
+      data.grid.forEach(row => {
+        const rowEl = document.createElement("div");
+        rowEl.className = "guide-row";
+        rowEl.innerHTML = `
+          <div class="ch-col">CH ${row.channel}</div>
+          <div class="name-col">${row.name}</div>
+          <div class="now-col">${row.now_title}</div>
+        `;
+        gridEl.appendChild(rowEl);
+      });
+    } catch (e) {
+      // Local fallback guide
+      gridEl.innerHTML = `
+        <div class="guide-row"><div class="ch-col">CH 1</div><div class="name-col">TV GUIDE</div><div class="now-col">Prevue Channel Continuous Program Guide</div></div>
+        <div class="guide-row"><div class="ch-col">CH 2</div><div class="name-col">CARTOON EXPRESS</div><div class="now-col">Arthur / Magic School Bus (Season 1)</div></div>
+        <div class="guide-row"><div class="ch-col">CH 3</div><div class="name-col">MOVIE MATINEE</div><div class="now-col">The Iron Giant (1999) / Space Jam</div></div>
+        <div class="guide-row"><div class="ch-col">CH 4</div><div class="name-col">AFTER-SCHOOL</div><div class="now-col">4:00 PM Arthur • 4:30 PM Magic School Bus</div></div>
+        <div class="guide-row"><div class="ch-col">CH 5</div><div class="name-col">90s COMMERCIALS</div><div class="now-col">Classic Toy & Cereal Commercial Reel</div></div>
+      `;
+    }
+  }
+
+  // Tune to Channel
+  async function tuneChannel(chNum) {
+    if (!isPowered) return;
+    currentChannel = chNum;
+    triggerChannelStatic(350);
+
+    const status = await fetchChannelStatus(chNum);
+    showOSD(chNum, status.name, status.title);
+
+    if (status.type === "guide") {
+      // Switch to Prevue Channel View
+      stopFallbackAnimation();
+      mainVideo.pause();
+      mainVideo.style.display = "none";
+      guideView.style.display = "flex";
+      renderGuideGrid();
+      guidePipVideo.src = status.pip_url || "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4";
+      guidePipVideo.play().catch(() => {});
+    } else {
+      // Standard Channel View
+      guideView.style.display = "none";
+      guidePipVideo.pause();
+
+      if (status.video_url) {
+        stopFallbackAnimation();
+        mainVideo.style.display = "block";
+        mainVideo.src = status.video_url;
+        
+        // Seek to calculated real-time offset
+        mainVideo.onloadedmetadata = () => {
+          if (status.seek_seconds && status.seek_seconds < mainVideo.duration) {
+            mainVideo.currentTime = status.seek_seconds;
+          }
+          mainVideo.play().catch(err => {
+            console.warn("Autoplay blocked, switching to fallback animation", err);
+            startFallbackAnimation(status.title);
+          });
+        };
+
+        mainVideo.onerror = () => {
+          console.warn("Video failed to stream, activating retro canvas fallback");
+          startFallbackAnimation(status.title);
+        };
+      } else {
+        startFallbackAnimation(status.title);
+      }
+    }
+  }
+
+  function channelUp() {
+    let next = currentChannel + 1;
+    if (next > 5) next = 1;
+    tuneChannel(next);
+  }
+
+  function channelDown() {
+    let prev = currentChannel - 1;
+    if (prev < 1) prev = 5;
+    tuneChannel(prev);
+  }
+
+  function volUp() {
+    if (mainVideo.volume < 1) mainVideo.volume = Math.min(1, mainVideo.volume + 0.1);
+  }
+
+  function volDown() {
+    if (mainVideo.volume > 0) mainVideo.volume = Math.max(0, mainVideo.volume - 0.1);
+  }
+
+  function toggleMute() {
+    isMuted = !isMuted;
+    mainVideo.muted = isMuted;
+    guidePipVideo.muted = isMuted;
+    unmuteOverlay.style.display = isMuted ? "block" : "none";
+  }
+
+  function togglePower() {
+    isPowered = !isPowered;
+    const screen = document.getElementById("screen");
+    const led = document.getElementById("power-led");
+    if (isPowered) {
+      screen.style.filter = "none";
+      led.style.background = "#ff3333";
+      tuneChannel(currentChannel);
+    } else {
+      screen.style.filter = "brightness(0)";
+      mainVideo.pause();
+      guidePipVideo.pause();
+      led.style.background = "#441111";
+      playStaticBurst(150);
+    }
+  }
+
+  function toggleCRT() {
+    const screen = document.getElementById("screen");
+    screen.classList.toggle("curvature-on");
+  }
+
+  function toggleScanlines() {
+    const scan = document.getElementById("scanlines-layer");
+    scan.style.display = scan.style.display === "none" ? "block" : "none";
+  }
+
+  function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+      document.exitFullscreen().catch(() => {});
+    }
+  }
+
+  function confirmSelect() {
+    showOSD(currentChannel, "SELECT", "OK");
+  }
+
+  // Keyboard Handlers (LG Magic Remote mapping)
+  window.addEventListener("keydown", (e) => {
+    initAudio();
+    if (e.key === "ArrowUp") channelUp();
+    else if (e.key === "ArrowDown") channelDown();
+    else if (e.key >= "1" && e.key <= "5") tuneChannel(parseInt(e.key));
+    else if (e.key.toLowerCase() === "g") tuneChannel(1);
+    else if (e.key.toLowerCase() === "m") toggleMute();
+    else if (e.key.toLowerCase() === "f") toggleFullscreen();
+    else if (e.key.toLowerCase() === "c") toggleCRT();
+    else if (e.key === " ") togglePower();
+  });
+
+  // User click unlocks Web Audio & un-mutes
+  document.addEventListener("click", () => {
+    initAudio();
+    if (isMuted) {
+      toggleMute();
+    }
+  }, { once: true });
+
+  unmuteOverlay.addEventListener("click", () => {
+    initAudio();
+    toggleMute();
+  });
+
+  // Initial Boot Tune
+  tuneChannel(2);
+
+  // Poll Prevue Clock every second
+  setInterval(() => {
+    if (currentChannel === 1) {
+      renderGuideGrid();
+    }
+  }, 1000);
+</script>
+
+</body>
+</html>

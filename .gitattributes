@@ -1,0 +1,28 @@
+# Enforce LF line endings across platforms
+* text=auto eol=lf
+
+# Explicit text files
+*.py text diff=python
+*.json text
+*.yaml text
+*.yml text
+*.md text
+*.html text
+*.css text
+*.js text
+*.glsl text
+*.sh text eol=lf
+*.service text eol=lf
+
+# Binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.mp4 binary
+*.mp3 binary
+*.wav binary
+*.ttf binary
+*.woff binary
+*.woff2 binary

@@ -1,0 +1,22 @@
+channels:
+  1:
+    name: "TV Guide"
+    type: "guide"
+  2:
+    name: "Cartoon Network"
+    type: "tv_shows"
+    directory: "/mnt/nas/shows/CartoonNetwork"
+  3:
+    name: "Movie Matinee"
+    type: "movies"
+    directory: "/mnt/nas/movies"
+  4:
+    name: "Scheduled Kids"
+    type: "tv_shows"
+    schedule:
+      - start: "08:00"
+        end: "10:00"
+        directory: "/mnt/nas/shows/Arthur"
+      - start: "16:00"
+        end: "18:00"
+        directory: "/mnt/nas/shows/MagicSchoolBus"
