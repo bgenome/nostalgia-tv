@@ -21,6 +21,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_FILE = os.path.join(BASE_DIR, "data", "channels.json")
 YAML_FILE = os.path.join(BASE_DIR, "data", "channels.yaml")
 WEB_DIR = os.path.join(BASE_DIR, "web")
+TV_DIR = os.path.join(BASE_DIR, "tv")
 EPOCH = datetime(2020, 1, 1, 0, 0, 0)
 START_TIME = time.time()
 
@@ -35,6 +36,7 @@ youtube_client = YouTubeClient()
 def get_local_ip():
     """Detects primary local network IP address."""
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.settimeout(0.5)
     try:
         s.connect(('8.8.8.8', 80))
         ip = s.getsockname()[0]
@@ -383,10 +385,53 @@ class NostalgiaTVHandler(SimpleHTTPRequestHandler):
         except Exception:
             pass
 
+    def _serve_static_file(self, filepath, content_type):
+        if not os.path.exists(filepath) or not os.path.isfile(filepath):
+            self.send_response(404)
+            self.end_headers()
+            return
+        try:
+            with open(filepath, "rb") as f:
+                content = f.read()
+            self.send_response(200)
+            self.send_header("Content-Type", content_type)
+            self.send_header("Content-Length", str(len(content)))
+            self.end_headers()
+            self.wfile.write(content)
+        except Exception:
+            self.send_response(500)
+            self.end_headers()
+
+    def do_HEAD(self):
+        self.do_GET()
+
     def do_GET(self):
         parsed = urllib.parse.urlparse(self.path)
         path = parsed.path
         query = urllib.parse.parse_qs(parsed.query)
+
+        # Route /tv to 10-foot Smart TV App
+        if path in ["/tv", "/tv/"]:
+            filepath = os.path.join(TV_DIR, "index.html")
+            return self._serve_static_file(filepath, "text/html; charset=utf-8")
+
+        if path.startswith("/tv/"):
+            rel_file = path[4:].lstrip("/\\")
+            filepath = os.path.abspath(os.path.join(TV_DIR, rel_file))
+            if not filepath.startswith(TV_DIR) or not os.path.exists(filepath):
+                self.send_response(404)
+                self.end_headers()
+                return
+            content_type = "text/plain"
+            if filepath.endswith(".html"):
+                content_type = "text/html; charset=utf-8"
+            elif filepath.endswith(".js"):
+                content_type = "application/javascript"
+            elif filepath.endswith(".css"):
+                content_type = "text/css"
+            elif filepath.endswith(".png"):
+                content_type = "image/png"
+            return self._serve_static_file(filepath, content_type)
 
         # Route /admin to /admin.html
         if path in ["/admin", "/admin/"]:
@@ -683,7 +728,8 @@ def run_server(port=8080, open_browser=False):
     
     print("\n" + "=" * 64)
     print("  📺 NOSTALGIA TV BROADCAST SERVER & REMOTE ADMIN PANEL")
-    print(f"  >> TV View (Local):         http://localhost:{port}/")
+    print(f"  >> Desktop TV View (Local): http://localhost:{port}/")
+    print(f"  >> Smart TV 10-Foot App:    http://{local_ip}:{port}/tv")
     print(f"  >> Admin Panel (Local):     http://localhost:{port}/admin")
     print(f"  >> Remote Network Admin:    http://{local_ip}:{port}/admin")
     print("  >> Plex Media Server Integration: Active")

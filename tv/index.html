@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Nostalgia TV - Smart TV Broadcast Player</title>
+  <link rel="stylesheet" href="tv-style.css">
+</head>
+<body>
+
+  <!-- Fullscreen 10-Foot TV Viewport -->
+  <div class="tv-viewport">
+    <div class="crt-screen curvature-on" id="screen">
+      
+      <!-- Video Player Layer -->
+      <video id="main-video" playsinline></video>
+
+      <!-- Fallback / Store Demo SMPTE Test Pattern Canvas -->
+      <canvas id="test-pattern-canvas"></canvas>
+
+      <!-- Static Noise Burst Canvas (Channel change effect) -->
+      <canvas id="static-canvas"></canvas>
+
+      <!-- CRT Shader Scanlines Overlay -->
+      <div class="scanlines-overlay" id="scanlines-overlay"></div>
+
+      <!-- CRT Vignette & Phosphor Mask -->
+      <div class="crt-vignette"></div>
+
+      <!-- On-Screen Display (OSD) -->
+      <div class="osd-container" id="osd">
+        <div class="osd-channel" id="osd-channel-text">CH 02</div>
+        <div class="osd-title" id="osd-title-text">CARTOON EXPRESS • Arthur</div>
+        <div class="osd-tag" id="osd-tag-text">BROADCAST STEREO</div>
+      </div>
+
+      <!-- Prevue TV Guide Channel (CH 1 Split View) -->
+      <div class="guide-view" id="guide-view">
+        <div class="guide-top">
+          <video id="guide-pip-video" playsinline loop></video>
+          <div class="guide-top-banner">PREVUE CHANNEL 1 • CONTINUOUS LISTINGS</div>
+        </div>
+        <div class="guide-bottom">
+          <div class="guide-header">
+            <span>CHANNEL LISTING</span>
+            <span id="guide-clock">12:00:00 PM</span>
+          </div>
+          <div class="guide-grid" id="guide-grid-rows">
+            <!-- Dynamically populated rows -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Audio Unlock Prompt Banner -->
+      <div id="unmute-banner" onclick="TVAdapter.toggleMute()">
+        🔊 Press OK / Enter for Audio
+      </div>
+
+      <!-- Bottom Quick HUD Bar (Visible when pressing Left Arrow) -->
+      <div class="tv-hud-bar" id="hud-bar">
+        <button class="hud-btn nav-focusable" onclick="tuneChannel(1)">CH 1 Guide</button>
+        <button class="hud-btn nav-focusable" onclick="channelDown()">CH ▼</button>
+        <button class="hud-btn nav-focusable" onclick="channelUp()">CH ▲</button>
+        <button class="hud-btn nav-focusable" onclick="toggleCRT()">CRT Toggle</button>
+        <button class="hud-btn nav-focusable" onclick="TVAdapter.openModal('settings-modal')">⚙ Settings</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Server Connection & Settings Modal -->
+  <div class="tv-modal-backdrop" id="settings-modal">
+    <div class="tv-dialog">
+      <h2>⚙ SERVER CONNECTION SETUP</h2>
+      <p>
+        Enter your local <strong>Nostalgia TV Broadcast Server</strong> IP address.<br>
+        Make sure <code>server.py</code> is running on your PC, Mac, or home server on the same Wi-Fi / LAN network.
+      </p>
+      
+      <div class="tv-input-row">
+        <input type="text" id="server-ip-input" class="tv-text-input nav-focusable" placeholder="http://192.168.1.100:8080" />
+      </div>
+
+      <div class="tv-btn-row">
+        <button class="tv-btn nav-focusable" onclick="testConnection()">Test Connection</button>
+        <button class="tv-btn nav-focusable" onclick="runDemoMode()">Demo Pattern</button>
+        <button class="tv-btn primary nav-focusable" onclick="saveServerSettings()">Save &amp; Tune</button>
+        <button class="tv-btn nav-focusable" onclick="TVAdapter.closeModal('settings-modal')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Exit Confirmation Modal (Mandatory for Tizen / webOS Store Certification) -->
+  <div class="tv-modal-backdrop" id="exit-modal">
+    <div class="tv-dialog" style="max-width: 600px; text-align: center;">
+      <h2>EXIT NOSTALGIA TV?</h2>
+      <p>Are you sure you want to return to the Smart TV Home Screen?</p>
+      <div class="tv-btn-row" style="justify-content: center; margin-top: 20px;">
+        <button class="tv-btn primary nav-focusable" onclick="TVAdapter.exitApp()">Exit Application</button>
+        <button class="tv-btn nav-focusable" onclick="TVAdapter.closeModal('exit-modal')">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Smart TV Platform Adapter -->
+  <script src="tv-adapter.js"></script>
+
+  <!-- Application Logic -->
+  <script>
+    let currentChannel = 2;
+    let isGuide = false;
+    let osdTimer = null;
+    let staticInterval = null;
+    let isDemoMode = false;
+
+    const mainVideo = document.getElementById('main-video');
+    const guidePipVideo = document.getElementById('guide-pip-video');
+    const guideView = document.getElementById('guide-view');
+    const testCanvas = document.getElementById('test-pattern-canvas');
+    const staticCanvas = document.getElementById('static-canvas');
+    const staticCtx = staticCanvas.getContext('2d');
+    const hudBar = document.getElementById('hud-bar');
+
+    // Canvas Sizing
+    function initCanvases() {
+      staticCanvas.width = 160;
+      staticCanvas.height = 120;
+      testCanvas.width = 1280;
+      testCanvas.height = 720;
+    }
+
+    // Static Noise Frame Renderer
+    function renderStaticNoise() {
+      const w = staticCanvas.width;
+      const h = staticCanvas.height;
+      const imgData = staticCtx.createImageData(w, h);
+      const buf = new Uint32Array(imgData.data.buffer);
+      for (let i = 0; i < buf.length; i++) {
+        const val = (Math.random() * 255) | 0;
+        buf[i] = (255 << 24) | (val << 16) | (val << 8) | val;
+      }
+      staticCtx.putImageData(imgData, 0, 0);
+    }
+
+    function triggerChannelStatic(ms = 350) {
+      staticCanvas.style.opacity = '1';
+      playStaticBurstSound(ms);
+      if (!staticInterval) {
+        staticInterval = setInterval(renderStaticNoise, 33);
+      }
+      setTimeout(() => {
+        staticCanvas.style.opacity = '0';
+        clearInterval(staticInterval);
+        staticInterval = null;
+      }, ms);
+    }
+
+    function playStaticBurstSound(durationMs = 280) {
+      if (TVAdapter.isMuted || !TVAdapter.audioCtx) return;
+      try {
+        const bufferSize = TVAdapter.audioCtx.sampleRate * (durationMs / 1000);
+        const buffer = TVAdapter.audioCtx.createBuffer(1, bufferSize, TVAdapter.audioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+          data[i] = (Math.random() * 2 - 1) * 0.12;
+        }
+        const noise = TVAdapter.audioCtx.createBufferSource();
+        noise.buffer = buffer;
+        const gain = TVAdapter.audioCtx.createGain();
+        gain.gain.setValueAtTime(0.25, TVAdapter.audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, TVAdapter.audioCtx.currentTime + (durationMs / 1000));
+        noise.connect(gain);
+        gain.connect(TVAdapter.audioCtx.destination);
+        noise.start();
+      } catch (e) {}
+    }
+
+    // Audio Mute Hook
+    window.setAudioMute = function (muted) {
+      mainVideo.muted = muted;
+      guidePipVideo.muted = muted;
+    };
+
+    // On-Screen Display (OSD)
+    function showOSD(chNum, name, title) {
+      const osd = document.getElementById('osd');
+      document.getElementById('osd-channel-text').innerText = `CH 0${chNum}`;
+      document.getElementById('osd-title-text').innerText = `${name || 'BROADCAST'} • ${title || ''}`;
+      osd.classList.add('active');
+      if (osdTimer) clearTimeout(osdTimer);
+      osdTimer = setTimeout(() => {
+        osd.classList.remove('active');
+      }, 4000);
+    }
+    window.showChannelOSD = () => showOSD(currentChannel, 'NOSTALGIA TV', 'Live Broadcast');
+
+    // Fetch Channel Status from Server
+    async function fetchChannelStatus(chNum) {
+      const base = TVAdapter.getServerUrl();
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3500);
+
+      try {
+        const res = await fetch(`${base}/api/status?channel=${chNum}`, { signal: controller.signal });
+        clearTimeout(timeoutId);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return await res.json();
+      } catch (err) {
+        console.warn(`[NostalgiaTV] Failed to fetch channel status from ${base}:`, err);
+        return null;
+      }
+    }
+
+    // Prevue Channel Guide Grid
+    async function renderGuideGrid() {
+      const base = TVAdapter.getServerUrl();
+      const gridEl = document.getElementById('guide-grid-rows');
+      const clockEl = document.getElementById('guide-clock');
+      clockEl.innerText = new Date().toLocaleTimeString();
+
+      try {
+        const res = await fetch(`${base}/api/guide`);
+        const data = await res.json();
+        gridEl.innerHTML = '';
+        data.grid.forEach(row => {
+          const rowEl = document.createElement('div');
+          rowEl.className = 'guide-row' + (row.channel === currentChannel ? ' active-tuning' : '');
+          rowEl.innerHTML = `
+            <div class="ch-col">CH ${row.channel}</div>
+            <div class="name-col">${row.name}</div>
+            <div class="now-col">${row.now_title}</div>
+          `;
+          gridEl.appendChild(rowEl);
+        });
+      } catch (e) {
+        gridEl.innerHTML = `
+          <div class="guide-row"><div class="ch-col">CH 1</div><div class="name-col">PREVUE GUIDE</div><div class="now-col">Live Continuous TV Guide</div></div>
+          <div class="guide-row"><div class="ch-col">CH 2</div><div class="name-col">CARTOON EXPRESS</div><div class="now-col">Vintage Animated Series</div></div>
+          <div class="guide-row"><div class="ch-col">CH 3</div><div class="name-col">MOVIE MATINEE</div><div class="now-col">Classic Feature Presentations</div></div>
+          <div class="guide-row"><div class="ch-col">CH 4</div><div class="name-col">AFTER-SCHOOL</div><div class="now-col">Scheduled Broadcast Lineup</div></div>
+        `;
+      }
+    }
+
+    // Tune Channel
+    async function tuneChannel(chNum) {
+      currentChannel = chNum;
+      triggerChannelStatic(350);
+      TVAdapter.stopTestTone();
+      testCanvas.style.display = 'none';
+
+      const status = await fetchChannelStatus(chNum);
+
+      if (!status) {
+        // Server unreachable -> activate legal SMPTE demo test pattern
+        activateSMPTEDemo('SERVER OFFLINE • PRESS [RIGHT ARROW] TO CONFIGURE IP');
+        return;
+      }
+
+      isDemoMode = false;
+      showOSD(chNum, status.name, status.title);
+
+      if (status.type === 'guide') {
+        isGuide = true;
+        mainVideo.pause();
+        mainVideo.style.display = 'none';
+        guideView.style.display = 'flex';
+        renderGuideGrid();
+        guidePipVideo.src = status.pip_url || 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4';
+        guidePipVideo.play().catch(() => {});
+      } else {
+        isGuide = false;
+        guideView.style.display = 'none';
+        guidePipVideo.pause();
+        mainVideo.style.display = 'block';
+
+        if (status.video_url) {
+          // Resolve relative or localhost video URLs if coming from server
+          let videoUrl = status.video_url;
+          if (videoUrl.startsWith('/')) {
+            videoUrl = `${TVAdapter.getServerUrl()}${videoUrl}`;
+          } else if (videoUrl.includes('127.0.0.1:8080') || videoUrl.includes('localhost:8080')) {
+            videoUrl = videoUrl.replace(/https?:\/\/(127\.0\.0\.1|localhost):8080/, TVAdapter.getServerUrl());
+          }
+
+          mainVideo.src = videoUrl;
+          mainVideo.onloadedmetadata = () => {
+            if (status.seek_seconds && status.seek_seconds < mainVideo.duration) {
+              mainVideo.currentTime = status.seek_seconds;
+            }
+            mainVideo.play().catch(() => {
+              console.warn('[NostalgiaTV] Video autoplay blocked');
+            });
+          };
+
+          mainVideo.onerror = () => {
+            console.warn('[NostalgiaTV] Stream playback error, falling back to test pattern');
+            activateSMPTEDemo('VIDEO STREAM ERROR • CHECK FORMAT');
+          };
+        } else {
+          activateSMPTEDemo('NO BROADCAST FEED ACTIVE');
+        }
+      }
+    }
+    window.tuneChannel = tuneChannel;
+
+    window.channelUp = function () {
+      let next = currentChannel + 1;
+      if (next > 6) next = 1;
+      tuneChannel(next);
+    };
+
+    window.channelDown = function () {
+      let prev = currentChannel - 1;
+      if (prev < 1) prev = 6;
+      tuneChannel(prev);
+    };
+
+    window.toggleGuide = function () {
+      if (isGuide) {
+        tuneChannel(2);
+      } else {
+        tuneChannel(1);
+      }
+    };
+
+    window.isGuideActive = () => isGuide;
+    window.closeGuide = () => tuneChannel(2);
+
+    function activateSMPTEDemo(message) {
+      isDemoMode = true;
+      mainVideo.pause();
+      mainVideo.style.display = 'none';
+      guideView.style.display = 'none';
+      testCanvas.style.display = 'block';
+      TVAdapter.renderSMPTETestPattern(testCanvas, message);
+      TVAdapter.startTestTone();
+      showOSD(currentChannel, 'SMPTE TEST PATTERN', 'Demo Signal');
+    }
+
+    // Settings Modal Functions
+    function saveServerSettings() {
+      const input = document.getElementById('server-ip-input');
+      const val = input.value.trim();
+      if (val) {
+        TVAdapter.setServerUrl(val);
+      }
+      TVAdapter.closeModal('settings-modal');
+      tuneChannel(currentChannel);
+    }
+
+    async function testConnection() {
+      const input = document.getElementById('server-ip-input');
+      const url = input.value.trim() || TVAdapter.getServerUrl();
+      try {
+        const res = await fetch(`${url}/api/admin/system`, { signal: AbortSignal.timeout(3000) });
+        if (res.ok) {
+          alert('✅ Connected successfully to Nostalgia TV Server!');
+        } else {
+          alert(`⚠️ Server responded with HTTP ${res.status}`);
+        }
+      } catch (e) {
+        alert(`❌ Connection failed: Unable to reach ${url}. Check IP and Wi-Fi.`);
+      }
+    }
+
+    function runDemoMode() {
+      TVAdapter.closeModal('settings-modal');
+      activateSMPTEDemo('OFFLINE STORE CERTIFICATION DEMO');
+    }
+
+    function toggleCRT() {
+      const screen = document.getElementById('screen');
+      screen.classList.toggle('curvature-on');
+    }
+
+    // Initialize App on DOM Load
+    window.addEventListener('DOMContentLoaded', () => {
+      initCanvases();
+      TVAdapter.init();
+
+      // Populate Server IP input in Settings modal
+      const ipInput = document.getElementById('server-ip-input');
+      if (ipInput) {
+        ipInput.value = TVAdapter.getServerUrl();
+      }
+
+      // Initial channel tune
+      tuneChannel(2);
+
+      // Prevue guide clock updater
+      setInterval(() => {
+        if (isGuide) {
+          renderGuideGrid();
+        }
+      }, 1000);
+    });
+  </script>
+
+</body>
+</html>

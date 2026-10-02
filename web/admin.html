@@ -515,6 +515,8 @@
           <!-- Rendered via JS -->
         </div>
       </div>
+    </div>
+
     <!-- TAB: YouTube Premium Channels -->
     <div class="tab-pane" id="tab-youtube">
       <!-- Status & Overview -->
@@ -816,12 +818,14 @@
     setTimeout(() => t.classList.remove("show"), 3000);
   }
 
-  function switchTab(tabId) {
+  function switchTab(tabId, el) {
     activeTab = tabId;
     document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
     document.querySelectorAll(".tab-pane").forEach(p => p.classList.remove("active"));
-    event.currentTarget.classList.add("active");
-    document.getElementById(`tab-${tabId}`).classList.add("active");
+    const targetBtn = el || (typeof event !== 'undefined' && event && event.currentTarget ? event.currentTarget : null) || document.querySelector(`[onclick*="'${tabId}'"]`);
+    if (targetBtn && targetBtn.classList) targetBtn.classList.add("active");
+    const pane = document.getElementById(`tab-${tabId}`);
+    if (pane) pane.classList.add("active");
     if (tabId === "monitor") refreshStatus();
     if (tabId === "channels") loadChannels();
     if (tabId === "plex") loadPlexData();

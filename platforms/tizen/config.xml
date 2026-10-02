@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<widget xmlns="http://www.w3.org/ns/widgets" 
+        xmlns:tizen="http://tizen.org/ns/widgets" 
+        id="http://nostalgiatv.org/tv" 
+        version="1.0.0" 
+        viewmodes="fullscreen">
+    <tizen:application id="NostalgiaTV.NostalgiaTV" exec="index.html" package="NostalgiaTV" />
+    <name>Nostalgia TV</name>
+    <description>Retro 90s Television and Broadcast Companion Player</description>
+    <author href="https://github.com/nostalgia-tv" email="developer@nostalgiatv.org">Nostalgia TV</author>
+    <icon src="icon.png"/>
+    
+    <!-- Required Tizen TV Store Privileges -->
+    <tizen:privilege name="http://tizen.org/privilege/tv.inputdevice"/>
+    <tizen:privilege name="http://tizen.org/privilege/internet"/>
+    <tizen:privilege name="http://tizen.org/privilege/application.launch"/>
+    <tizen:privilege name="http://tizen.org/privilege/power"/>
+    
+    <!-- Network Access & TV Profile -->
+    <access origin="*" subdomains="true"/>
+    <tizen:profile name="tv-samsung"/>
+    <tizen:setting screen-orientation="landscape" context-menu="disable" background-support="disable" />
+</widget>

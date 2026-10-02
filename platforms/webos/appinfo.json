@@ -1,0 +1,20 @@
+{
+  "id": "org.nostalgiatv.app",
+  "version": "1.0.0",
+  "vendor": "Nostalgia TV",
+  "type": "web",
+  "main": "index.html",
+  "title": "Nostalgia TV",
+  "icon": "icon.png",
+  "largeIcon": "largeIcon.png",
+  "bgImage": "splash.png",
+  "resolution": "1920x1080",
+  "requiredPermissions": [
+    "network"
+  ],
+  "accessibility": {
+    "supportsAudioGuidance": false
+  },
+  "supportTouchMode": false,
+  "handlesRelaunch": true
+}

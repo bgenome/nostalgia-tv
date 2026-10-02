@@ -1,0 +1,434 @@
+/* ==========================================================================
+   Nostalgia TV - 10-Foot Smart TV UI Styling (webOS & Tizen Compatible)
+   ========================================================================== */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+:root {
+  --phosphor-green: #33ff33;
+  --phosphor-glow: rgba(51, 255, 51, 0.6);
+  --amber-gold: #ffaa00;
+  --crt-blue: #000088;
+  --safe-padding-x: 4vw;
+  --safe-padding-y: 4vh;
+}
+
+body {
+  background-color: #000;
+  color: #fff;
+  font-family: 'Courier New', Courier, monospace, system-ui;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  position: relative;
+}
+
+/* 10-Foot CRT Display Viewport */
+.tv-viewport {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+}
+
+.crt-screen {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background-color: #050505;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translateZ(0); /* Hardware acceleration */
+}
+
+.crt-screen.curvature-on {
+  border-radius: 40px / 30px;
+  transform: perspective(1000px) scale(0.98) translateZ(0);
+  box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.95);
+}
+
+/* Video Player Layer */
+#main-video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #000;
+  filter: contrast(1.1) brightness(1.05) saturate(1.15);
+}
+
+/* Test Pattern & Fallback Canvas */
+#test-pattern-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: none;
+  z-index: 5;
+}
+
+/* Static Noise Burst Canvas */
+#static-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 15;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.08s ease;
+  image-rendering: pixelated;
+}
+
+/* Scanlines Shader Overlay */
+.scanlines-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 20;
+  pointer-events: none;
+  background: linear-gradient(
+    rgba(18, 16, 16, 0) 50%,
+    rgba(0, 0, 0, 0.42) 50%
+  );
+  background-size: 100% 4px;
+  opacity: 0.85;
+}
+
+/* CRT Vignette & Phosphor Shadow */
+.crt-vignette {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 22;
+  pointer-events: none;
+  background: radial-gradient(circle at center, transparent 70%, rgba(0, 0, 0, 0.85) 100%);
+  box-shadow: inset 0 0 80px rgba(0, 0, 0, 0.9);
+}
+
+/* Retro On-Screen Display (OSD) Banner */
+.osd-container {
+  position: absolute;
+  top: var(--safe-padding-y);
+  left: var(--safe-padding-x);
+  z-index: 40;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  background: rgba(0, 20, 0, 0.7);
+  border: 2px solid var(--phosphor-green);
+  border-radius: 8px;
+  padding: 14px 28px;
+  box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+}
+
+.osd-container.active {
+  opacity: 1;
+}
+
+.osd-channel {
+  font-size: 54px;
+  font-weight: 900;
+  color: var(--phosphor-green);
+  text-shadow: 0 0 12px var(--phosphor-green), 0 0 24px #008800;
+  letter-spacing: 3px;
+  line-height: 1;
+}
+
+.osd-title {
+  font-size: 26px;
+  font-weight: bold;
+  color: #aaffaa;
+  text-shadow: 0 0 10px #008800;
+  letter-spacing: 1px;
+  margin-top: 8px;
+  max-width: 800px;
+}
+
+.osd-tag {
+  display: inline-block;
+  margin-top: 8px;
+  background: rgba(0, 255, 0, 0.2);
+  border: 1px solid var(--phosphor-green);
+  color: var(--phosphor-green);
+  padding: 4px 12px;
+  font-size: 16px;
+  font-weight: bold;
+  border-radius: 4px;
+}
+
+/* Audio Unlock Overlay */
+#unmute-banner {
+  position: absolute;
+  bottom: var(--safe-padding-y);
+  right: var(--safe-padding-x);
+  z-index: 50;
+  background: rgba(0, 0, 0, 0.85);
+  border: 2px solid var(--amber-gold);
+  color: var(--amber-gold);
+  font-size: 22px;
+  font-weight: bold;
+  padding: 12px 24px;
+  border-radius: 8px;
+  box-shadow: 0 0 15px rgba(255, 170, 0, 0.4);
+  animation: pulse 1.8s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.9; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.98); }
+}
+
+/* ================= TV Guide (Prevue Channel 1) ================= */
+.guide-view {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: none;
+  flex-direction: column;
+  z-index: 10;
+  background: #000088;
+}
+
+.guide-top {
+  height: 46%;
+  position: relative;
+  background: #000;
+  border-bottom: 5px solid #ffff00;
+}
+
+.guide-top video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.guide-top-banner {
+  position: absolute;
+  top: var(--safe-padding-y);
+  left: var(--safe-padding-x);
+  background: rgba(0, 0, 120, 0.85);
+  border: 3px solid #ffff00;
+  padding: 8px 18px;
+  color: #ffff00;
+  font-size: 24px;
+  font-weight: 900;
+  letter-spacing: 2px;
+}
+
+.guide-bottom {
+  height: 54%;
+  background: #0000aa;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0 var(--safe-padding-x);
+}
+
+.guide-header {
+  background: #000066;
+  border-bottom: 4px solid #ffff00;
+  padding: 12px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #ffff00;
+  font-weight: 900;
+  font-size: 24px;
+}
+
+.guide-grid {
+  flex: 1;
+  overflow-y: hidden;
+  display: flex;
+  flex-direction: column;
+  font-size: 22px;
+}
+
+.guide-row {
+  display: flex;
+  border-bottom: 2px solid #2222cc;
+  padding: 12px 18px;
+  background: rgba(0, 0, 160, 0.7);
+  align-items: center;
+}
+
+.guide-row:nth-child(even) {
+  background: rgba(0, 0, 130, 0.85);
+}
+
+.guide-row.active-tuning {
+  background: rgba(0, 255, 0, 0.25);
+  border-left: 8px solid var(--phosphor-green);
+}
+
+.guide-row .ch-col {
+  width: 110px;
+  font-weight: 900;
+  color: #ffff00;
+}
+
+.guide-row .name-col {
+  width: 320px;
+  font-weight: bold;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.guide-row .now-col {
+  flex: 1;
+  color: #ffdd44;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ================= 10-Foot Spatial Navigation Focusables ================= */
+.nav-focusable {
+  outline: none;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.nav-focusable:focus,
+.nav-focusable.focused {
+  outline: 4px solid var(--phosphor-green) !important;
+  box-shadow: 0 0 25px var(--phosphor-glow) !important;
+  transform: scale(1.04);
+  z-index: 100;
+}
+
+/* ================= Modals (Pairing, Settings, Exit) ================= */
+.tv-modal-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.85);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 80;
+}
+
+.tv-modal-backdrop.open {
+  display: flex;
+}
+
+.tv-dialog {
+  background: #11141a;
+  border: 4px solid var(--phosphor-green);
+  border-radius: 16px;
+  padding: 36px 48px;
+  max-width: 800px;
+  width: 90%;
+  color: #fff;
+  box-shadow: 0 0 40px rgba(0, 255, 0, 0.4);
+}
+
+.tv-dialog h2 {
+  font-size: 36px;
+  color: var(--phosphor-green);
+  text-shadow: 0 0 10px var(--phosphor-glow);
+  margin-bottom: 16px;
+  letter-spacing: 2px;
+}
+
+.tv-dialog p {
+  font-size: 20px;
+  line-height: 1.5;
+  color: #ccd;
+  margin-bottom: 24px;
+}
+
+.tv-input-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.tv-text-input {
+  flex: 1;
+  background: #05070a;
+  border: 3px solid #445;
+  border-radius: 8px;
+  color: #33ff33;
+  font-family: inherit;
+  font-size: 26px;
+  padding: 12px 18px;
+}
+
+.tv-btn-row {
+  display: flex;
+  gap: 20px;
+  justify-content: flex-end;
+}
+
+.tv-btn {
+  background: #1d212b;
+  border: 3px solid #556;
+  border-radius: 8px;
+  color: #fff;
+  font-family: inherit;
+  font-size: 22px;
+  font-weight: bold;
+  padding: 14px 28px;
+}
+
+.tv-btn.primary {
+  background: #004400;
+  border-color: var(--phosphor-green);
+  color: #33ff33;
+}
+
+/* Quick Remote HUD Bar (Bottom Menu when Navigating Left) */
+.tv-hud-bar {
+  position: absolute;
+  bottom: var(--safe-padding-y);
+  left: var(--safe-padding-x);
+  z-index: 45;
+  display: flex;
+  gap: 16px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.tv-hud-bar.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.hud-btn {
+  background: rgba(10, 15, 20, 0.9);
+  border: 2px solid #556;
+  border-radius: 8px;
+  color: #aab;
+  padding: 10px 20px;
+  font-size: 18px;
+  font-weight: bold;
+}
