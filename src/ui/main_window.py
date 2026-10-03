@@ -93,7 +93,10 @@ class MainWindow(QMainWindow):
         
         filepath, seek_time = self.scheduler.get_currently_playing(channel_num)
         if filepath:
-            print(f"Playing {filepath} at {seek_time}s")
+            if "X-Plex-Token=" in str(filepath):
+                print(f"Playing Plex stream at {seek_time}s")
+            else:
+                print(f"Playing {filepath} at {seek_time}s")
             self.video_widget.play(filepath, seek_time)
             
     def show_overlay(self, text):

@@ -90,10 +90,22 @@ flowchart LR
 - **Raspberry Pi**: Pi 5, Pi 4B, Pi 3B+, or Pi Zero 2W.
 - **Display**: Any TV or CRT display with HDMI input (or HDMI-to-Composite converter) supporting HDMI-CEC.
 - **Remote**: Your television's standard physical remote control.
-- **OS**: Raspberry Pi OS Lite (64-bit recommended, Debian Bookworm).
+- **OS**: The flashable image is 64 bit Raspberry Pi OS Lite.
 
-### 2. Installation on Raspberry Pi
-SSH into your Raspberry Pi and clone the repository:
+### 2. Flashable image
+
+The commercial artifact is a Raspberry Pi image. Build it with one command. The image file is too large to commit.
+
+```bash
+sudo ./image/build-image.sh
+```
+
+Buyers flash that image and follow [docs/FLASH.md](docs/FLASH.md). The image boots `main.py` from `nostalgia-tv.service`. It plays a Plex server or local files. YouTube is not installed on it.
+
+`scripts/setup_kiosk.sh` is a developer installer for a Pi you already administer over SSH. It does not produce a flashable image.
+
+### 3. Developer installer
+SSH into a Raspberry Pi you already administer and clone the repository:
 
 ```bash
 git clone https://github.com/bgenome/nostalgia-tv.git
@@ -112,7 +124,7 @@ This script:
 2. Creates a Python virtual environment and installs required drivers.
 3. Installs and enables the `nostalgia-tv.service` systemd daemon.
 
-### 3. Launch Nostalgia TV
+### 4. Launch the developer installer
 ```bash
 sudo systemctl start nostalgia-tv
 ```
@@ -200,9 +212,14 @@ Turn YouTube playlists or channels into linear scheduled stations with range-req
 
 ```text
 nostalgia-tv/
+├── image/
+│   ├── build-image.sh             # One command that emits the flashable image
+│   └── stage-nostalgia/           # pi-gen stage installed on that image
+├── docs/
+│   └── FLASH.md                   # Buyer flash guide
 ├── scripts/
-│   ├── setup_kiosk.sh             # Raspberry Pi OS Lite automated kiosk installer
-│   ├── nostalgia-tv.service       # Systemd auto-boot daemon for cage kiosk
+│   ├── setup_kiosk.sh             # Developer SSH installer, not the flashable image
+│   ├── nostalgia-tv.service       # Systemd unit used by the developer installer
 │   └── run_plex_docker.sh         # Optional local Plex server container
 ├── shaders/
 │   └── crt-easymode.glsl          # GLSL CRT shader for MPV video pipeline

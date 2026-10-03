@@ -1,0 +1,14 @@
+cage
+mpv
+libmpv2
+python3-pyqt6
+python3-mpv
+python3-yaml
+python3-venv
+cec-utils
+libcec7
+ffmpeg
+seatd
+fonts-dejavu-core
+exfatprogs
+ntfs-3g

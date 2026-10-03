@@ -1,0 +1,21 @@
+[Unit]
+Description=Nostalgia TV Kiosk Application
+After=network-online.target systemd-user-sessions.service seatd.service nostalgia-mount-library.service
+Wants=network-online.target seatd.service nostalgia-mount-library.service
+
+[Service]
+Type=simple
+User=pi
+Group=pi
+SupplementaryGroups=video render input seat
+Environment=XDG_RUNTIME_DIR=/run/nostalgia-tv
+Environment=LIBSEAT_BACKEND=seatd
+Environment=WLR_LIBINPUT_NO_DEVICES=1
+ExecStartPre=+/usr/bin/install -d -o pi -g pi -m 700 /run/nostalgia-tv
+ExecStart=/usr/bin/cage -s -- /home/pi/nostalgia-tv/venv/bin/python /home/pi/nostalgia-tv/main.py
+WorkingDirectory=/home/pi/nostalgia-tv
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

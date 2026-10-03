@@ -1,0 +1,1 @@
+pi ALL=(root) NOPASSWD: /usr/local/sbin/nostalgia-mount-library, /usr/local/sbin/nostalgia-set-timezone
