@@ -341,6 +341,9 @@ class PlexClient:
     def is_configured(self):
         return bool(self.config.get("server_url") and self.config.get("token"))
 
+    def _wants_demo(self):
+        return bool(self.config.get("use_demo_mode", True))
+
     def _make_request(self, path, params=None):
         """Sends authenticated JSON request to live Plex Media Server."""
         server_url = self.config.get("server_url", "").rstrip("/")
@@ -416,8 +419,10 @@ class PlexClient:
 
     def get_libraries(self):
         """Retrieves all TV Show and Movie libraries from Plex."""
-        if self.config.get("use_demo_mode", True) or not self.is_configured():
+        if self._wants_demo():
             return DEMO_PLEX_DATA["libraries"]
+        if not self.is_configured():
+            return []
 
         try:
             data = self._make_request("/library/sections")
@@ -435,18 +440,19 @@ class PlexClient:
                     })
             return results
         except Exception:
-            # Graceful fallback to demo data if live server drops offline
-            return DEMO_PLEX_DATA["libraries"]
+            return []
 
     def get_library_items(self, section_id):
         """Retrieves all shows or movies in a given library section."""
-        if self.config.get("use_demo_mode", True) or not self.is_configured():
+        if self._wants_demo():
             if str(section_id) == "1":
                 return list(DEMO_PLEX_DATA["shows"].values())
             elif str(section_id) == "2":
                 return list(DEMO_PLEX_DATA["movies"].values())
             elif str(section_id) == "3":
                 return DEMO_PLEX_DATA["commercials"]
+            return []
+        if not self.is_configured():
             return []
 
         try:
@@ -486,11 +492,11 @@ class PlexClient:
                 items.append(item)
             return items
         except Exception:
-            return list(DEMO_PLEX_DATA["shows"].values()) if str(section_id) == "1" else list(DEMO_PLEX_DATA["movies"].values())
+            return []
 
     def get_show_episodes(self, rating_key):
         """Retrieves all episodes of a TV show with durations and streaming URLs."""
-        if self.config.get("use_demo_mode", True) or not self.is_configured():
+        if self._wants_demo():
             show = DEMO_PLEX_DATA["shows"].get(str(rating_key))
             if show:
                 return {
@@ -498,6 +504,8 @@ class PlexClient:
                     "episodes": show["episodes"]
                 }
             return {"show_title": "Unknown Show", "episodes": []}
+        if not self.is_configured():
+            return {"show_title": "", "episodes": []}
 
         try:
             data = self._make_request(f"/library/metadata/{rating_key}/allLeaves")
@@ -533,11 +541,8 @@ class PlexClient:
                 "show_title": show_title,
                 "episodes": episodes
             }
-        except Exception as e:
-            show = DEMO_PLEX_DATA["shows"].get(str(rating_key))
-            if show:
-                return {"show_title": show["title"], "episodes": show["episodes"]}
-            return {"show_title": "Error fetching", "episodes": [], "error": str(e)}
+        except Exception:
+            return {"show_title": "", "episodes": []}
 
     def search(self, query):
         """Searches Plex library for cartoons, shows, or movies matching a query."""

@@ -112,6 +112,20 @@ venv/
 ENV/
 env/
 
+# Flashable image build (the image itself is too large to commit)
+image/.pi-gen/
+image/deploy/
+image/pi-gen.local.config
+*.img
+*.img.xz
+*.img.gz
+*.img.zip
+
+# Station choices and tokens created on a device
+data/station.json
+data/client_id
+data/plex_lineup.json
+
 # Testing & Coverage
 .pytest_cache/
 .coverage

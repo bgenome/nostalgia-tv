@@ -1,0 +1,6 @@
+[Unit]
+Description=Mount a USB library for Nostalgia TV
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/nostalgia-mount-library

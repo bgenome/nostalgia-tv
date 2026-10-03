@@ -1,0 +1,24 @@
+#!/bin/bash
+set -eu
+
+MOUNTPOINT=/media/library
+mkdir -p "${MOUNTPOINT}"
+
+if findmnt --mountpoint "${MOUNTPOINT}" >/dev/null 2>&1; then
+	exit 0
+fi
+
+root_source="$(findmnt -n -o SOURCE / || true)"
+
+while read -r name rm fstype; do
+	[ "${rm}" = "1" ] || continue
+	[ -n "${fstype}" ] || continue
+	case "${root_source}" in
+		"${name}"*) continue ;;
+	esac
+	if mount -o ro "${name}" "${MOUNTPOINT}"; then
+		exit 0
+	fi
+done < <(lsblk -pnro NAME,RM,FSTYPE)
+
+exit 0
